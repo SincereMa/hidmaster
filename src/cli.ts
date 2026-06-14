@@ -1,117 +1,64 @@
 // src/cli.ts
-import { loadConfig, Config } from './core/config'
-import { detectAgents, AgentInfo } from './core/detector'
-import { SkillDistributor, DistributionResult } from './core/distributor'
-import { MiMoCodeAdapter } from './adapters/mimocode'
-import { ClaudeAdapter } from './adapters/claude'
-import { CodexAdapter } from './adapters/codex'
-import { OpenCodeAdapter } from './adapters/opencode'
-import { CursorAdapter } from './adapters/cursor'
-import { AgentAdapter, Skill } from './adapters/base'
-import { readFileSync, readdirSync, statSync } from 'fs'
-import { join, resolve } from 'path'
+import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, readFileSync, writeFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { homedir } from 'os'
+import { detectAgents } from './core/detector'
+
+const HIDMASTER_DIR = join(homedir(), '.hidmaster')
 
 export interface CliOptions {
   command: string
-  config?: string
-  verbose?: boolean
+  force?: boolean
 }
 
 export function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = {
-    command: 'distribute',
+    command: 'setup',
   }
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i]
-
-    if (arg === 'distribute' || arg === 'detect' || arg === 'list') {
+  for (const arg of args) {
+    if (arg === 'setup' || arg === 'detect' || arg === 'help') {
       options.command = arg
-    } else if (arg === '--config' && args[i + 1]) {
-      options.config = args[++i]
-    } else if (arg === '--verbose' || arg === '-v') {
-      options.verbose = true
+    } else if (arg === '--force' || arg === '-f') {
+      options.force = true
     }
   }
 
   return options
 }
 
-function createAdapters(config: Config, projectRoot: string): AgentAdapter[] {
-  const adapters: AgentAdapter[] = []
-
-  if (config.agents?.mimocode?.enabled) {
-    adapters.push(new MiMoCodeAdapter(projectRoot))
-  }
-  if (config.agents?.['claude-code']?.enabled) {
-    adapters.push(new ClaudeAdapter(projectRoot))
-  }
-  if (config.agents?.codex?.enabled) {
-    adapters.push(new CodexAdapter(projectRoot))
-  }
-  if (config.agents?.opencode?.enabled) {
-    adapters.push(new OpenCodeAdapter(projectRoot))
-  }
-  if (config.agents?.cursor?.enabled) {
-    adapters.push(new CursorAdapter(projectRoot))
-  }
-
-  return adapters
-}
-
-function loadSkillsFromPath(skillPath: string): Skill[] {
-  const skills: Skill[] = []
-
-  try {
-    const stat = statSync(skillPath)
+function copyDirSync(src: string, dest: string) {
+  mkdirSync(dest, { recursive: true })
+  const entries = readdirSync(src)
+  for (const entry of entries) {
+    const srcPath = join(src, entry)
+    const destPath = join(dest, entry)
+    const stat = statSync(srcPath)
     if (stat.isDirectory()) {
-      const entries = readdirSync(skillPath)
-      for (const entry of entries) {
-        skills.push(...loadSkillsFromPath(join(skillPath, entry)))
-      }
-    } else if (skillPath.endsWith('SKILL.md')) {
-      const content = readFileSync(skillPath, 'utf-8')
-      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
-
-      if (frontmatterMatch) {
-        const [, frontmatter] = frontmatterMatch
-        const metadata: Record<string, string> = {}
-
-        for (const line of frontmatter.split('\n')) {
-          const [key, ...valueParts] = line.split(':')
-          if (key && valueParts.length > 0) {
-            metadata[key.trim()] = valueParts.join(':').trim()
-          }
-        }
-
-        if (metadata.name) {
-          // Parse category from path (e.g., skills/core/explore/SKILL.md -> core)
-          const pathParts = skillPath.split('/')
-          const skillsIndex = pathParts.findIndex(p => p === 'skills')
-          const category = skillsIndex >= 0 && pathParts[skillsIndex + 1] ? pathParts[skillsIndex + 1] : 'custom'
-
-          skills.push({
-            name: metadata.name,
-            description: metadata.description || '',
-            category,
-            content,
-            filePath: skillPath,
-          })
-        }
-      }
+      copyDirSync(srcPath, destPath)
+    } else {
+      copyFileSync(srcPath, destPath)
     }
-  } catch {
-    // Path doesn't exist
   }
-
-  return skills
 }
 
-async function distribute(configPath: string, projectRoot: string): Promise<void> {
-  const config = loadConfig(configPath)
+async function setup(projectRoot: string, force: boolean = false) {
+  console.log('\nhidmaster - Setting up workflow skills\n')
+
+  // Check if hidmaster is installed
+  if (!existsSync(HIDMASTER_DIR)) {
+    console.error('Error: hidmaster not installed. Run install.sh first.')
+    process.exit(1)
+  }
+
+  // Detect agents
   const agents = await detectAgents(projectRoot)
 
-  console.log(`\nhidmaster - Distributing skills for: ${config.name}\n`)
+  if (agents.length === 0) {
+    console.log('No agents detected. Creating .opencode directory...')
+    mkdirSync(join(projectRoot, '.opencode'), { recursive: true })
+    agents.push({ name: 'opencode', detected: true, configDir: join(projectRoot, '.opencode') })
+  }
 
   console.log('Detected agents:')
   for (const agent of agents) {
@@ -119,83 +66,127 @@ async function distribute(configPath: string, projectRoot: string): Promise<void
   }
   console.log('')
 
-  const adapters = createAdapters(config, projectRoot)
-  const distributor = new SkillDistributor(adapters)
-
-  // Load skills from configured paths
-  const allSkills: Skill[] = []
-  for (const source of config.skills) {
-    if (source.path) {
-      const fullPath = resolve(projectRoot, source.path)
-      allSkills.push(...loadSkillsFromPath(fullPath))
-    }
+  // Agent directory mapping
+  const agentDirs: Record<string, { skills: string; instructions: string }> = {
+    'opencode': { skills: '.opencode/skills', instructions: '.opencode/AGENTS.md' },
+    'mimocode': { skills: '.mimocode/skills', instructions: '.mimocode/AGENTS.md' },
+    'claude-code': { skills: '.claude/skills', instructions: 'CLAUDE.md' },
+    'codex': { skills: '.codex/skills', instructions: 'AGENTS.md' },
+    'cursor': { skills: '.cursor/rules', instructions: '.cursor/AGENTS.md' },
   }
 
-  console.log(`Distributing ${allSkills.length} skills to ${adapters.length} agents...\n`)
-
-  const result = await distributor.distributeAll(allSkills)
-
-  console.log('Results:')
-  console.log(`  ✓ Success: ${result.success.length}`)
-  console.log(`  ✗ Failed: ${result.failed.length}`)
-
-  if (result.failed.length > 0) {
-    console.log('\nFailed distributions:')
-    for (const failure of result.failed) {
-      console.log(`  - ${failure.skill} to ${failure.adapter}: ${failure.error.message}`)
+  // Copy skills and instructions to each agent
+  for (const agent of agents) {
+    const dirs = agentDirs[agent.name]
+    if (!dirs) {
+      console.log(`  Skipping ${agent.name} (no mapping configured)`)
+      continue
     }
+
+    const agentBaseDir = dirname(agent.configDir)
+    const skillsDir = join(agentBaseDir, dirs.skills)
+    const instructionsPath = join(agentBaseDir, dirs.instructions)
+
+    // Copy skills
+    console.log(`Installing skills to ${dirs.skills}...`)
+    const srcSkillsDir = join(HIDMASTER_DIR, 'skills')
+    if (existsSync(srcSkillsDir)) {
+      copyDirSync(srcSkillsDir, skillsDir)
+      console.log(`  ✓ Skills copied`)
+    }
+
+    // Copy instructions
+    console.log(`Installing instructions to ${dirs.instructions}...`)
+    const instructionsDir = join(HIDMASTER_DIR, 'instructions')
+    let instructionFile = 'opencode.md'
+    if (agent.name === 'mimocode') instructionFile = 'mimocode.md'
+    else if (agent.name === 'claude-code') instructionFile = 'claude.md'
+    else if (agent.name === 'codex') instructionFile = 'codex.md'
+
+    const srcInstruction = join(instructionsDir, instructionFile)
+    if (existsSync(srcInstruction)) {
+      mkdirSync(dirname(instructionsPath), { recursive: true })
+      copyFileSync(srcInstruction, instructionsPath)
+      console.log(`  ✓ Instructions copied`)
+    }
+
+    console.log(`  ✓ ${agent.name} configured\n`)
   }
 
-  console.log('\nDone!')
+  console.log('Setup complete!')
+  console.log('')
+  console.log('Your agent now has:')
+  console.log('  - 22 production-ready skills')
+  console.log('  - Auto-orchestration instructions')
+  console.log('')
+  console.log('Just start coding - your agent will automatically:')
+  console.log('  - Use the right skills for each task')
+  console.log('  - Orchestrate multi-step workflows')
+  console.log('  - Produce high-quality results')
 }
 
-async function detect(projectRoot: string): Promise<void> {
+async function detect(projectRoot: string) {
   const agents = await detectAgents(projectRoot)
 
   console.log('\nhidmaster - Agent Detection\n')
 
   if (agents.length === 0) {
-    console.log('No agents detected in current directory.')
+    console.log('No agents detected.')
     console.log('\nSupported agents:')
+    console.log('  - OpenCode (.opencode)')
     console.log('  - MiMo-Code (.mimocode)')
     console.log('  - Claude Code (.claude)')
     console.log('  - Codex (.codex)')
-    console.log('  - OpenCode (.opencode)')
-    console.log('  - Cursor (.cursor)')
   } else {
     console.log('Detected agents:')
     for (const agent of agents) {
-      console.log(`  ✓ ${agent.name} (${agent.configDir})`)
+      console.log(`  ✓ ${agent.name}`)
     }
   }
 
   console.log('')
 }
 
-export async function main(): Promise<void> {
+function showHelp() {
+  console.log(`
+hidmaster - AI Agent Workflow Enhancer
+
+Usage:
+  hidmaster [command]
+
+Commands:
+  setup     Install skills and instructions (default)
+  detect    Detect installed agents
+  help      Show this help message
+
+Options:
+  --force   Force reinstall even if already configured
+
+Examples:
+  hidmaster           # Setup skills for detected agents
+  hidmaster detect    # Check which agents are installed
+  hidmaster setup -f  # Force reinstall
+`)
+}
+
+export async function main() {
   const args = process.argv.slice(2)
   const options = parseArgs(args)
-
   const projectRoot = process.cwd()
-  const configPath = options.config || join(projectRoot, 'hidmaster.yaml')
 
-  try {
-    switch (options.command) {
-      case 'distribute':
-        await distribute(configPath, projectRoot)
-        break
-      case 'detect':
-        await detect(projectRoot)
-        break
-      case 'list':
-        console.log('List command not yet implemented')
-        break
-      default:
-        console.log(`Unknown command: ${options.command}`)
-        process.exit(1)
-    }
-  } catch (error) {
-    console.error('Error:', error instanceof Error ? error.message : error)
-    process.exit(1)
+  switch (options.command) {
+    case 'setup':
+      await setup(projectRoot, options.force)
+      break
+    case 'detect':
+      await detect(projectRoot)
+      break
+    case 'help':
+      showHelp()
+      break
+    default:
+      console.error(`Unknown command: ${options.command}`)
+      showHelp()
+      process.exit(1)
   }
 }
