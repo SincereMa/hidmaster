@@ -15,8 +15,19 @@ describe('Skill Registry', () => {
     expect(explore?.category).toBe('core')
   })
 
-  it('should have all 6 core skills', () => {
+  it('should have all skill categories', () => {
     const skills = getBuiltInSkills()
-    expect(skills.length).toBe(6)
+    const categories = new Set(skills.map(s => s.category))
+    expect(categories.has('core')).toBe(true)
+    expect(categories.has('development')).toBe(true)
+    expect(categories.has('documentation')).toBe(true)
+    expect(categories.has('review')).toBe(true)
+    expect(categories.has('planning')).toBe(true)
+    expect(categories.has('collaboration')).toBe(true)
+  })
+
+  it('should have at least 20 skills', () => {
+    const skills = getBuiltInSkills()
+    expect(skills.length).toBeGreaterThanOrEqual(20)
   })
 })

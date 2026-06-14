@@ -3,11 +3,11 @@ import { describe, it, expect } from 'bun:test'
 import { parseArgs, CliOptions } from '../src/cli'
 
 describe('CLI', () => {
-  it('should parse distribute command', () => {
-    const args = ['distribute', '--config', 'hidmaster.yaml']
+  it('should parse setup command', () => {
+    const args = ['setup', '--force']
     const options = parseArgs(args)
-    expect(options.command).toBe('distribute')
-    expect(options.config).toBe('hidmaster.yaml')
+    expect(options.command).toBe('setup')
+    expect(options.force).toBe(true)
   })
 
   it('should parse detect command', () => {
@@ -16,15 +16,15 @@ describe('CLI', () => {
     expect(options.command).toBe('detect')
   })
 
-  it('should parse list command', () => {
-    const args = ['list']
+  it('should parse help command', () => {
+    const args = ['help']
     const options = parseArgs(args)
-    expect(options.command).toBe('list')
+    expect(options.command).toBe('help')
   })
 
-  it('should default to distribute command', () => {
+  it('should default to setup command', () => {
     const args: string[] = []
     const options = parseArgs(args)
-    expect(options.command).toBe('distribute')
+    expect(options.command).toBe('setup')
   })
 })
