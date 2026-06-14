@@ -22,19 +22,22 @@ if [ -d "$SCRIPT_DIR/instructions" ]; then
     cp -r "$SCRIPT_DIR/instructions/"* "$HIDMASTER_DIR/instructions/" 2>/dev/null || true
 fi
 
-# Copy CLI
+# Copy CLI entry point
+cat > "$HIDMASTER_DIR/bin/hidmaster.ts" << 'ENTRY'
+#!/usr/bin/env bun
+import { main } from './cli'
+main()
+ENTRY
+
+# Copy CLI module
 if [ -f "$SCRIPT_DIR/src/cli.ts" ]; then
-    cp "$SCRIPT_DIR/src/cli.ts" "$HIDMASTER_DIR/bin/hidmaster.ts"
+    cp "$SCRIPT_DIR/src/cli.ts" "$HIDMASTER_DIR/bin/cli.ts"
 fi
 
 # Copy core modules
 mkdir -p "$HIDMASTER_DIR/bin/core"
-mkdir -p "$HIDMASTER_DIR/bin/adapters"
 if [ -d "$SCRIPT_DIR/src/core" ]; then
     cp -r "$SCRIPT_DIR/src/core/"* "$HIDMASTER_DIR/bin/core/"
-fi
-if [ -d "$SCRIPT_DIR/src/adapters" ]; then
-    cp -r "$SCRIPT_DIR/src/adapters/"* "$HIDMASTER_DIR/bin/adapters/"
 fi
 
 # Create wrapper script
