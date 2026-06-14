@@ -214,7 +214,7 @@ async function setup(projectRoot: string, force: boolean = false, cliAgent?: str
   console.log('Setup complete!')
   console.log('')
   console.log('Your agent now has:')
-  console.log('  - 22 production-ready skills')
+  console.log('  - 21 production-ready skills')
   console.log('  - Auto-orchestration instructions')
   console.log('')
   console.log('Just start coding - your agent will automatically:')
