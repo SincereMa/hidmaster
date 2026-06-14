@@ -13,7 +13,6 @@ const AGENT_MARKERS: Record<string, string> = {
   'claude-code': '.claude',
   codex: '.codex',
   opencode: '.opencode',
-  cursor: '.cursor',
 }
 
 export async function detectAgents(directory: string): Promise<AgentInfo[]> {

@@ -48,7 +48,7 @@ hidmaster
 
 That's it. hidmaster will:
 
-1. **Detect** which AI agent you're using (Claude Code, MiMo-Code, Codex, OpenCode, Cursor)
+1. **Detect** which AI agent you're using (Claude Code, MiMo-Code, Codex, OpenCode)
 2. **Install** 22 production skills to the agent's native directory
 3. **Configure** auto-orchestration instructions so the agent knows how to use them
 
@@ -68,7 +68,6 @@ hidmaster --force  # force reinstall, overwrite existing skills
 | MiMo-Code | `.mimocode/skills/` | `.mimocode/AGENTS.md` |
 | Codex | `.codex/skills/` | `AGENTS.md` |
 | OpenCode | `.opencode/skills/` | `.opencode/AGENTS.md` |
-| Cursor | `.cursor/rules/` | `.cursor/AGENTS.md` |
 
 ## Skills
 
@@ -117,66 +116,31 @@ User: "Review the PR"
 Agent: code-review → security-review → performance-review
 ```
 
-## Configuration
-
-hidmaster works out of the box with zero configuration. Optionally, create `hidmaster.yaml` to customize:
-
-```yaml
-name: my-project
-version: 1.0.0
-
-skills:
-  - path: ./skills              # local skills directory
-
-agents:
-  claude-code: { enabled: true }
-  mimocode: { enabled: true }
-  codex: { enabled: true }
-  opencode: { enabled: false }  # disable agents you don't use
-  cursor: { enabled: false }
-
-settings:
-  auto_sync: true               # auto-sync on file changes
-  symlink: false                # use symlinks instead of copies
-  conflict_resolution: skip     # skip | overwrite | rename
-```
-
 ## How It Works
 
 ```
 ~/.hidmaster/
-├── bin/
-│   └── hidmaster              # CLI entry point (Bun)
+├── bin/hidmaster              # CLI entry point (Bun)
 ├── skills/                    # 22 production skills
-│   ├── core/
-│   │   ├── explore/SKILL.md
-│   │   ├── architect/SKILL.md
-│   │   ├── implement/SKILL.md
-│   │   ├── validate/SKILL.md
-│   │   ├── ship/SKILL.md
-│   │   └── iterate/SKILL.md
+│   ├── core/                  # explore, architect, implement, validate, ship, iterate
 │   ├── development/           # debug, refactor, optimize
 │   ├── planning/              # brainstorm, estimate, roadmap
 │   ├── review/                # code-review, security-review, performance-review
 │   ├── documentation/         # generate-docs, api-docs, changelog
 │   └── collaboration/         # parallel, subagent, handoff
-├── instructions/              # per-agent orchestration instructions
-│   ├── claude.md
-│   ├── mimocode.md
-│   ├── codex.md
-│   └── opencode.md
-└── src/
-    ├── core/                  # detector, config, distributor
-    ├── adapters/              # per-agent adapters
-    └── skills/                # skill registry
+└── instructions/              # per-agent orchestration instructions
+    ├── claude.md
+    ├── mimocode.md
+    ├── codex.md
+    └── opencode.md
 ```
 
 ### Architecture
 
-- **Detector** — scans for agent marker directories (`.claude`, `.mimocode`, etc.)
-- **Adapters** — per-agent adapters that know where to write skills and instructions
-- **Skill Registry** — parses `SKILL.md` frontmatter and builds a skill catalog
-- **Distributor** — orchestrates pushing skills to all enabled agents
+- **CLI** (`bin/hidmaster.ts` → `src/cli.ts`) — entry point, parses commands
+- **Detector** (`src/core/detector.ts`) — scans for agent marker directories (`.claude`, `.mimocode`, etc.)
+- **Skills** (`skills/`) — 22 SKILL.md files with YAML frontmatter and detailed workflows
+- **Instructions** (`instructions/`) — per-agent orchestration instructions that teach agents how to use skills automatically
 
 ## Development
 

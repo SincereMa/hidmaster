@@ -72,7 +72,6 @@ async function setup(projectRoot: string, force: boolean = false) {
     'mimocode': { skills: '.mimocode/skills', instructions: '.mimocode/AGENTS.md' },
     'claude-code': { skills: '.claude/skills', instructions: 'CLAUDE.md' },
     'codex': { skills: '.codex/skills', instructions: 'AGENTS.md' },
-    'cursor': { skills: '.cursor/rules', instructions: '.cursor/AGENTS.md' },
   }
 
   // Copy skills and instructions to each agent
