@@ -2,15 +2,6 @@
 name: security-review
 description: Security vulnerability assessment and threat modeling for code changes
 category: review
-triggers:
-  - security review
-  - security audit
-  - vulnerability scan
-  - threat model
-  - security check
-  - security assessment
-  - penetration test
-  - OWASP
 prerequisites:
   - Code changes identified for review
   - Understanding of application architecture

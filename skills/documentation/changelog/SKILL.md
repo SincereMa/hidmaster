@@ -2,15 +2,6 @@
 name: changelog
 description: Generate and maintain changelogs following semantic versioning conventions
 category: documentation
-triggers:
-  - changelog
-  - release notes
-  - version history
-  - what's new
-  - release
-  - version bump
-  - breaking changes
-  - update changelog
 prerequisites:
   - Access to git history
   - Understanding of semantic versioning

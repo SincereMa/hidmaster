@@ -2,18 +2,6 @@
 name: debug
 description: Systematic debugging methodology for identifying and resolving software defects
 category: development
-triggers:
-  - bug
-  - error
-  - crash
-  - broken
-  - failing
-  - not working
-  - issue
-  - problem
-  - exception
-  - undefined is not a function
-  - cannot read property
 prerequisites:
   - Access to error messages or stack traces
   - Understanding of expected vs actual behavior
@@ -30,6 +18,16 @@ output:
 
 Systematically identify, analyze, and resolve software defects using a structured methodology that minimizes guesswork and ensures thorough investigation.
 
+## The Iron Law
+
+```
+NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+```
+
+If you haven't completed Phase 1 (Reproduce + Isolate), you cannot propose fixes.
+
+**Violating the letter of this process is violating the spirit of debugging.**
+
 ## When to Use
 
 - Runtime errors or exceptions occur
@@ -38,6 +36,13 @@ Systematically identify, analyze, and resolve software defects using a structure
 - Performance degrades without obvious cause
 - Intermittent or hard-to-reproduce issues
 - Integration failures between components
+
+**Use this ESPECIALLY when:**
+- Under time pressure (emergencies make guessing tempting)
+- "Just one quick fix" seems obvious
+- You've already tried multiple fixes
+- Previous fix didn't work
+- You don't fully understand the issue
 
 ## Workflow
 
@@ -147,6 +152,20 @@ const name = user?.profile?.name ?? 'Unknown';
 - [ ] Git bisect (find regression commit)
 - [ ] Reproduction script (isolated test case)
 
+## Integration
+
+**Related skills:**
+- **tdd** — Write failing test reproducing the bug, then fix
+- **validate** — Verify fix worked before claiming success
+- **optimize** — If debug reveals performance issue, use optimize skill
+
+**Workflow chain:**
+```
+debug → tdd (write regression test) → validate → ship
+```
+
+**Next skill:** After root cause is found, use **tdd** to write a failing regression test, then fix the bug.
+
 ## Common Anti-Patterns
 
 - **Guessing without evidence** - Always verify assumptions
@@ -154,3 +173,31 @@ const name = user?.profile?.name ?? 'Unknown';
 - **Ignoring error messages** - Read the full stack trace
 - **Skipping reproduction** - Reproduce before fixing
 - **Not writing regression tests** - Prevents the same bug twice
+
+## Common Rationalizations
+
+| Excuse | Reality |
+|--------|---------|
+| "Issue is simple, don't need process" | Simple issues have root causes too. Process is fast for simple bugs. |
+| "Emergency, no time for process" | Systematic debugging is FASTER than guess-and-check thrashing. |
+| "Just try this first, then investigate" | First fix sets the pattern. Do it right from the start. |
+| "I'll write test after confirming fix works" | Untested fixes don't stick. Test first proves it. |
+| "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. |
+| "I see the problem, let me fix it" | Seeing symptoms ≠ understanding root cause. |
+| "One more fix attempt" (after 2+ failures) | 3+ failures = architectural problem. Question pattern, don't fix again. |
+
+## Red Flags — STOP and Follow Process
+
+If you catch yourself thinking:
+- "Quick fix for now, investigate later"
+- "Just try changing X and see if it works"
+- "Add multiple changes, run tests"
+- "Skip the test, I'll manually verify"
+- "It's probably X, let me fix that"
+- "I don't fully understand but this might work"
+- Proposing solutions before tracing data flow
+- **"One more fix attempt" (when already tried 2+)**
+
+**ALL of these mean: STOP. Return to Phase 1 (Reproduce).**
+
+**If 3+ fixes failed:** Question the architecture — is this pattern fundamentally sound?

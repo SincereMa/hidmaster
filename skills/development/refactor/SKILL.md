@@ -2,17 +2,6 @@
 name: refactor
 description: Code refactoring best practices for improving structure without changing behavior
 category: development
-triggers:
-  - refactor
-  - clean up
-  - technical debt
-  - code smell
-  - simplify
-  - reorganize
-  - extract
-  - modularize
-  - decouple
-  - improve
 prerequisites:
   - Existing code that works correctly
   - Test coverage for the code being refactored
@@ -28,6 +17,16 @@ output:
 ## Purpose
 
 Improve code structure, readability, and maintainability while preserving existing behavior. Apply systematic refactoring patterns to reduce technical debt.
+
+## The Iron Law
+
+```
+NO REFACTORING WITHOUT PASSING TESTS FIRST
+```
+
+If the existing tests don't pass before you start, or you can't verify they pass after each change, you cannot refactor safely.
+
+**Violating the letter of this rule is violating the spirit of refactoring.**
 
 ## When to Use
 
@@ -216,6 +215,28 @@ class UserManager {
 - **Premature optimization** - Refactor for clarity first
 - **Over-engineering** - Stop when code is clear enough
 - **Ignoring team conventions** - Follow existing style guides
+
+## Common Rationalizations
+
+| Excuse | Reality |
+|--------|---------|
+| "Tests exist but are slow" | Slow tests > no tests. Run them anyway. |
+| "I'll add tests after refactoring" | Refactoring without tests is rewriting. You'll break things. |
+| "This refactor is obvious" | Obvious refactors still break things. Tests prove correctness. |
+| "It's just renaming" | Renaming can break imports, reflections, dynamic lookups. Test it. |
+| "No time for tests" | No time to do it right = no time to do it at all. |
+| "The code is a mess, needs complete rewrite" | Gradual refactoring with tests beats big-bang rewrite. |
+
+## Red Flags — STOP and Add Tests
+
+- About to refactor without verifying tests pass first
+- "I'll write tests later" (for existing code being refactored)
+- "This is just a small change" (without running tests)
+- Mixing refactoring with feature additions
+- Refactoring multiple unrelated concerns at once
+- "The tests are in the way" (wanting to skip them)
+
+**All of these mean: STOP. Verify tests pass. Add missing tests. Then refactor.**
 
 ## Metrics to Track
 

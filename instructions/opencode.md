@@ -9,12 +9,12 @@ OpenCode automatically selects and chains skills based on task analysis. These i
 ```
 Task Type → Primary Skill → Secondary Skill → Workflow Pattern
 
-Feature Development → subagent → parallel → fan-out/fan-in
+Feature Development → subagent → subagent → fan-out/fan-in
 Bug Fixing → subagent → handoff → linear chain
-Code Review → parallel → subagent → merge
-Documentation → parallel → handoff → sequential
-Refactoring → subagent → parallel → fan-out
-Optimization → parallel → subagent → iterative
+Code Review → subagent → subagent → merge
+Documentation → subagent → handoff → sequential
+Refactoring → subagent → subagent → fan-out
+Optimization → subagent → subagent → iterative
 ```
 
 ### Automatic Triggers
@@ -23,7 +23,7 @@ Optimization → parallel → subagent → iterative
 ```yaml
 trigger: "Multiple independent operations detected"
 pattern: "Read A, B, C simultaneously"
-skill: parallel
+skill: subagent
 config:
   max_concurrent: 5
   timeout: 30s
@@ -238,12 +238,16 @@ orchestration:
       context: state
       
   skill_preferences:
-    parallel:
-      preferred_for: [reads, searches, analysis]
     subagent:
-      preferred_for: [implementation, complex logic]
+      preferred_for: [implementation, complex logic, reads, searches, analysis]
     handoff:
       preferred_for: [phase transitions, capability switches]
+    tdd:
+      preferred_for: [test_driven, validation, regression]
+    verify:
+      preferred_for: [validation, quality_checks, integration]
+    feedback:
+      preferred_for: [iteration, refinement, optimization]
 ```
 
 ### Task-Specific Overrides

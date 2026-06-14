@@ -261,15 +261,21 @@ codex:
       scale_down_threshold: 0.3
       
   skill_preferences:
-    parallel:
-      preferred_for: [batch_generation, analysis, testing]
-      avoid_for: [sequential_logic, shared_state]
     subagent:
-      preferred_for: [complex_generation, planning]
-      avoid_for: [simple_tasks, quick fixes]
+      preferred_for: [complex_generation, planning, batch_generation, analysis, testing]
+      avoid_for: [simple_tasks, quick fixes, sequential_logic, shared_state]
     handoff:
       preferred_for: [phase_transitions, integration]
       avoid_for: [single_phase_tasks]
+    tdd:
+      preferred_for: [test_driven, validation, regression]
+      avoid_for: [prototyping, exploratory]
+    verify:
+      preferred_for: [validation, quality_checks, integration]
+      avoid_for: [quick_fixes, simple_edits]
+    feedback:
+      preferred_for: [iteration, refinement, optimization]
+      avoid_for: [one_shot_tasks]
       
   checkpointing:
     auto_checkpoint: true
@@ -283,26 +289,26 @@ complexity_rules:
   simple:
     parallel_limit: 3
     timeout: 30s
-    skills: [parallel]
+    skills: [subagent]
     agent_type: explore
     
   moderate:
     parallel_limit: 6
     timeout: 60s
-    skills: [parallel, subagent]
+    skills: [subagent, tdd]
     agent_type: auto
     
   complex:
     parallel_limit: 10
     timeout: 180s
-    skills: [parallel, subagent, handoff]
+    skills: [subagent, handoff, tdd, verify]
     agent_type: general
     require_checkpoints: true
     
   expert:
     parallel_limit: 15
     timeout: 300s
-    skills: [all]
+    skills: [subagent, handoff, tdd, verify, feedback]
     agent_type: general
     require_checkpoints: true
     human_oversight: recommended

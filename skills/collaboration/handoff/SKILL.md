@@ -2,11 +2,6 @@
 name: handoff
 description: Transfer task context and control between agents seamlessly
 category: collaboration
-triggers:
-  - handoff
-  - transfer
-  - continue
-  - resume
 prerequisites:
   - Source agent must document current state
   - Target agent must understand task context
