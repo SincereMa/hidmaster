@@ -1,14 +1,23 @@
 // src/cli.ts
-import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, copyFileSync, readdirSync, statSync } from 'fs'
 import { join, dirname } from 'path'
 import { homedir } from 'os'
-import { detectAgents } from './core/detector'
+import { detectAgents, AGENT_MARKERS } from './core/detector'
+import * as readline from 'readline'
 
 const HIDMASTER_DIR = join(homedir(), '.hidmaster')
+
+const AGENT_DISPLAY_NAMES: Record<string, string> = {
+  'opencode': 'OpenCode',
+  'mimocode': 'MiMo-Code',
+  'claude-code': 'Claude Code',
+  'codex': 'Codex',
+}
 
 export interface CliOptions {
   command: string
   force?: boolean
+  agent?: string
 }
 
 export function parseArgs(args: string[]): CliOptions {
@@ -16,11 +25,14 @@ export function parseArgs(args: string[]): CliOptions {
     command: 'setup',
   }
 
-  for (const arg of args) {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
     if (arg === 'setup' || arg === 'detect' || arg === 'help') {
       options.command = arg
     } else if (arg === '--force' || arg === '-f') {
       options.force = true
+    } else if (arg === '--agent' || arg === '-a') {
+      options.agent = args[++i]
     }
   }
 
@@ -42,74 +54,149 @@ function copyDirSync(src: string, dest: string) {
   }
 }
 
-async function setup(projectRoot: string, force: boolean = false) {
-  console.log('\nhidmaster - Setting up workflow skills\n')
+function askQuestion(query: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  })
+  return new Promise(resolve => rl.question(query, ans => {
+    rl.close()
+    resolve(ans.trim())
+  }))
+}
 
-  // Check if hidmaster is installed
-  if (!existsSync(HIDMASTER_DIR)) {
-    console.error('Error: hidmaster not installed. Run install.sh first.')
+async function selectAgents(detectedAgents: string[], cliAgent?: string): Promise<string[]> {
+  const allAgents = Object.keys(AGENT_MARKERS)
+  const agentList = allAgents.map((name, i) => ({
+    name,
+    display: AGENT_DISPLAY_NAMES[name] || name,
+    detected: detectedAgents.includes(name),
+  }))
+
+  if (cliAgent) {
+    const selected = cliAgent.toLowerCase()
+    if (!allAgents.includes(selected)) {
+      console.error(`Unknown agent: ${selected}`)
+      console.error(`Supported agents: ${allAgents.join(', ')}`)
+      process.exit(1)
+    }
+    return [selected]
+  }
+
+  if (detectedAgents.length > 0) {
+    console.log('Detected agents:')
+    for (const agent of agentList) {
+      if (agent.detected) {
+        console.log(`  ✓ ${agent.display} (${AGENT_MARKERS[agent.name]})`)
+      }
+    }
+    console.log('')
+
+    const answer = await askQuestion('Install skills to detected agents? [Y/n] ')
+    if (answer === '' || answer.toLowerCase() === 'y') {
+      return detectedAgents
+    }
+  }
+
+  console.log('\nSelect agents to install skills to:\n')
+  for (let i = 0; i < agentList.length; i++) {
+    const agent = agentList[i]
+    const marker = agent.detected ? ' (detected)' : ''
+    console.log(`  ${i + 1}. ${agent.display} [${AGENT_MARKERS[agent.name]}]${marker}`)
+  }
+  console.log(`  a. All agents`)
+  console.log('')
+
+  const answer = await askQuestion('Enter numbers separated by commas (e.g. 1,2) or "a" for all: ')
+
+  if (answer.toLowerCase() === 'a') {
+    return allAgents
+  }
+
+  const selected: string[] = []
+  for (const num of answer.split(',')) {
+    const idx = parseInt(num.trim()) - 1
+    if (idx >= 0 && idx < agentList.length) {
+      selected.push(agentList[idx].name)
+    }
+  }
+
+  if (selected.length === 0) {
+    console.error('No valid agents selected.')
     process.exit(1)
   }
 
-  // Detect agents
-  const agents = await detectAgents(projectRoot)
+  return selected
+}
 
-  if (agents.length === 0) {
-    console.log('No agents detected. Creating .opencode directory...')
-    mkdirSync(join(projectRoot, '.opencode'), { recursive: true })
-    agents.push({ name: 'opencode', detected: true, configDir: join(projectRoot, '.opencode') })
-  }
-
-  console.log('Detected agents:')
-  for (const agent of agents) {
-    console.log(`  ✓ ${agent.name}`)
-  }
-  console.log('')
-
-  // Agent directory mapping
-  const agentDirs: Record<string, { skills: string; instructions: string }> = {
+function getAgentDirs(agentName: string): { skills: string; instructions: string } | null {
+  const map: Record<string, { skills: string; instructions: string }> = {
     'opencode': { skills: '.opencode/skills', instructions: '.opencode/AGENTS.md' },
     'mimocode': { skills: '.mimocode/skills', instructions: '.mimocode/AGENTS.md' },
     'claude-code': { skills: '.claude/skills', instructions: 'CLAUDE.md' },
     'codex': { skills: '.codex/skills', instructions: 'AGENTS.md' },
   }
+  return map[agentName] || null
+}
 
-  // Copy skills and instructions to each agent
-  for (const agent of agents) {
-    const dirs = agentDirs[agent.name]
+function getInstructionFile(agentName: string): string {
+  const map: Record<string, string> = {
+    'opencode': 'opencode.md',
+    'mimocode': 'mimocode.md',
+    'claude-code': 'claude.md',
+    'codex': 'codex.md',
+  }
+  return map[agentName] || 'opencode.md'
+}
+
+async function setup(projectRoot: string, force: boolean = false, cliAgent?: string) {
+  console.log('\nhidmaster - AI Agent Workflow Enhancer\n')
+
+  if (!existsSync(HIDMASTER_DIR)) {
+    console.error('Error: hidmaster not installed. Run install.sh first.')
+    process.exit(1)
+  }
+
+  if (!existsSync(join(HIDMASTER_DIR, 'skills')) || !existsSync(join(HIDMASTER_DIR, 'instructions'))) {
+    console.error('Error: hidmaster skills or instructions not found.')
+    console.error('Try reinstalling: bash install.sh')
+    process.exit(1)
+  }
+
+  const detected = await detectAgents(projectRoot)
+  const detectedNames = detected.map(a => a.name)
+
+  const selectedAgents = await selectAgents(detectedNames, cliAgent)
+
+  console.log('')
+  for (const agentName of selectedAgents) {
+    const dirs = getAgentDirs(agentName)
     if (!dirs) {
-      console.log(`  Skipping ${agent.name} (no mapping configured)`)
+      console.log(`Skipping ${agentName} (unknown agent)`)
       continue
     }
 
-    const agentBaseDir = dirname(agent.configDir)
-    const skillsDir = join(agentBaseDir, dirs.skills)
-    const instructionsPath = join(agentBaseDir, dirs.instructions)
+    const agentBaseDir = join(projectRoot, dirname(dirs.skills))
+    const skillsDir = join(projectRoot, dirs.skills)
+    const instructionsPath = join(projectRoot, dirs.instructions)
 
-    // Copy skills
-    console.log(`Installing skills to ${dirs.skills}...`)
+    const displayName = AGENT_DISPLAY_NAMES[agentName] || agentName
+    console.log(`Setting up ${displayName}...`)
+
     const srcSkillsDir = join(HIDMASTER_DIR, 'skills')
     if (existsSync(srcSkillsDir)) {
       copyDirSync(srcSkillsDir, skillsDir)
-      console.log(`  ✓ Skills copied`)
+      console.log(`  Skills  → ${dirs.skills}`)
     }
 
-    // Copy instructions
-    console.log(`Installing instructions to ${dirs.instructions}...`)
-    const instructionsDir = join(HIDMASTER_DIR, 'instructions')
-    let instructionFile = 'opencode.md'
-    if (agent.name === 'mimocode') instructionFile = 'mimocode.md'
-    else if (agent.name === 'claude-code') instructionFile = 'claude.md'
-    else if (agent.name === 'codex') instructionFile = 'codex.md'
-
-    const srcInstruction = join(instructionsDir, instructionFile)
+    const srcInstruction = join(HIDMASTER_DIR, 'instructions', getInstructionFile(agentName))
     if (existsSync(srcInstruction)) {
       mkdirSync(dirname(instructionsPath), { recursive: true })
       copyFileSync(srcInstruction, instructionsPath)
-      console.log(`  ✓ Instructions copied`)
+      console.log(`  Instructions  → ${dirs.instructions}`)
     }
 
-    console.log(`  ✓ ${agent.name} configured\n`)
+    console.log(`  Done\n`)
   }
 
   console.log('Setup complete!')
@@ -130,16 +217,18 @@ async function detect(projectRoot: string) {
   console.log('\nhidmaster - Agent Detection\n')
 
   if (agents.length === 0) {
-    console.log('No agents detected.')
-    console.log('\nSupported agents:')
-    console.log('  - OpenCode (.opencode)')
-    console.log('  - MiMo-Code (.mimocode)')
-    console.log('  - Claude Code (.claude)')
-    console.log('  - Codex (.codex)')
+    console.log('No agents detected in this project.')
+    console.log('')
+    console.log('Supported agents:')
+    for (const [name, marker] of Object.entries(AGENT_MARKERS)) {
+      console.log(`  - ${AGENT_DISPLAY_NAMES[name] || name} [${marker}]`)
+    }
+    console.log('')
+    console.log('Run "hidmaster" to install skills (you can choose an agent).')
   } else {
     console.log('Detected agents:')
     for (const agent of agents) {
-      console.log(`  ✓ ${agent.name}`)
+      console.log(`  ✓ ${AGENT_DISPLAY_NAMES[agent.name] || agent.name} [${AGENT_MARKERS[agent.name]}]`)
     }
   }
 
@@ -151,7 +240,7 @@ function showHelp() {
 hidmaster - AI Agent Workflow Enhancer
 
 Usage:
-  hidmaster [command]
+  hidmaster [command] [options]
 
 Commands:
   setup     Install skills and instructions (default)
@@ -159,12 +248,14 @@ Commands:
   help      Show this help message
 
 Options:
-  --force   Force reinstall even if already configured
+  --agent, -a <name>   Specify agent (opencode, mimocode, claude-code, codex)
+  --force, -f          Force reinstall even if already configured
 
 Examples:
-  hidmaster           # Setup skills for detected agents
-  hidmaster detect    # Check which agents are installed
-  hidmaster setup -f  # Force reinstall
+  hidmaster                    # Interactive agent selection
+  hidmaster --agent opencode   # Install for OpenCode directly
+  hidmaster detect             # Check which agents are installed
+  hidmaster setup -f           # Force reinstall
 `)
 }
 
@@ -175,7 +266,7 @@ export async function main() {
 
   switch (options.command) {
     case 'setup':
-      await setup(projectRoot, options.force)
+      await setup(projectRoot, options.force, options.agent)
       break
     case 'detect':
       await detect(projectRoot)

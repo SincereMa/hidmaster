@@ -8,7 +8,7 @@ export interface AgentInfo {
   configDir: string
 }
 
-const AGENT_MARKERS: Record<string, string> = {
+export const AGENT_MARKERS: Record<string, string> = {
   mimocode: '.mimocode',
   'claude-code': '.claude',
   codex: '.codex',

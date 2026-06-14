@@ -55,9 +55,11 @@ That's it. hidmaster will:
 ### Commands
 
 ```bash
-hidmaster          # detect agents and distribute skills
-hidmaster detect   # list detected agents only
-hidmaster --force  # force reinstall, overwrite existing skills
+hidmaster                         # interactive agent selection
+hidmaster --agent opencode        # install for OpenCode directly
+hidmaster --agent claude-code     # install for Claude Code directly
+hidmaster detect                  # list detected agents only
+hidmaster --force                 # force reinstall
 ```
 
 ## Supported Agents
