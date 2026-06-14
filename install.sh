@@ -1,25 +1,47 @@
 #!/bin/bash
 # install.sh - One-click hidmaster installation
+# Works both locally and via: curl -fsSL https://raw.githubusercontent.com/SincereMa/hidmaster/master/install.sh | bash
 
 set -e
 
 HIDMASTER_DIR="$HOME/.hidmaster"
+REPO_URL="https://github.com/SincereMa/hidmaster.git"
+
+# Determine if running from cloned repo or via curl pipe
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "Installing hidmaster..."
+# Check if we're running from a cloned repo (skills directory exists)
+if [ -d "$SCRIPT_DIR/skills" ]; then
+    echo "Installing from local directory..."
+    SOURCE_DIR="$SCRIPT_DIR"
+else
+    echo "Downloading hidmaster..."
+    TEMP_DIR=$(mktemp -d)
+    git clone --depth 1 "$REPO_URL" "$TEMP_DIR" 2>/dev/null || {
+        echo "Error: git clone failed. Please install git first."
+        exit 1
+    }
+    SOURCE_DIR="$TEMP_DIR/hidmaster"
+fi
+
+echo "Installing hidmaster to $HIDMASTER_DIR..."
 
 # Create directory structure
 mkdir -p "$HIDMASTER_DIR/bin"
+mkdir -p "$HIDMASTER_DIR/bin/core"
 mkdir -p "$HIDMASTER_DIR/skills"
 mkdir -p "$HIDMASTER_DIR/instructions"
 
-# Copy files
-if [ -d "$SCRIPT_DIR/skills" ]; then
-    cp -r "$SCRIPT_DIR/skills/"* "$HIDMASTER_DIR/skills/" 2>/dev/null || true
+# Copy skills
+if [ -d "$SOURCE_DIR/skills" ]; then
+    cp -r "$SOURCE_DIR/skills/"* "$HIDMASTER_DIR/skills/"
+    echo "Copied skills"
 fi
 
-if [ -d "$SCRIPT_DIR/instructions" ]; then
-    cp -r "$SCRIPT_DIR/instructions/"* "$HIDMASTER_DIR/instructions/" 2>/dev/null || true
+# Copy instructions
+if [ -d "$SOURCE_DIR/instructions" ]; then
+    cp -r "$SOURCE_DIR/instructions/"* "$HIDMASTER_DIR/instructions/"
+    echo "Copied instructions"
 fi
 
 # Copy CLI entry point
@@ -30,14 +52,15 @@ main()
 ENTRY
 
 # Copy CLI module
-if [ -f "$SCRIPT_DIR/src/cli.ts" ]; then
-    cp "$SCRIPT_DIR/src/cli.ts" "$HIDMASTER_DIR/bin/cli.ts"
+if [ -f "$SOURCE_DIR/src/cli.ts" ]; then
+    cp "$SOURCE_DIR/src/cli.ts" "$HIDMASTER_DIR/bin/cli.ts"
+    echo "Copied CLI"
 fi
 
 # Copy core modules
-mkdir -p "$HIDMASTER_DIR/bin/core"
-if [ -d "$SCRIPT_DIR/src/core" ]; then
-    cp -r "$SCRIPT_DIR/src/core/"* "$HIDMASTER_DIR/bin/core/"
+if [ -d "$SOURCE_DIR/src/core" ]; then
+    cp -r "$SOURCE_DIR/src/core/"* "$HIDMASTER_DIR/bin/core/"
+    echo "Copied core modules"
 fi
 
 # Create wrapper script
@@ -70,6 +93,11 @@ elif [[ "$SHELL" == */bash ]]; then
     else
         add_to_path "$HOME/.bashrc"
     fi
+fi
+
+# Cleanup temp directory if we cloned
+if [ -n "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
+    rm -rf "$TEMP_DIR"
 fi
 
 echo ""
