@@ -1,7 +1,7 @@
 {
   "name": "hidmaster",
   "version": "2.0.0",
-  "description": "One-click AI agent workflow enhancer - 22 production skills with auto-orchestration",
+  "description": "One-click AI agent workflow enhancer - 21 production skills with auto-orchestration",
   "type": "module",
   "bin": {
     "hidmaster": "./bin/hidmaster.ts"

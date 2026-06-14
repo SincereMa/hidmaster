@@ -2,12 +2,6 @@
 name: architect
 description: Technical design decisions and architecture planning
 category: core
-triggers:
-  - "design system"
-  - "architecture decision"
-  - "technical design"
-  - "plan implementation"
-  - "evaluate options"
 prerequisites:
   - Completed exploration phase
   - Understanding of requirements
@@ -317,14 +311,21 @@ Create structured comparison:
 7. **Think Long-term**: Consider maintenance and evolution
 8. **Be Reversible**: When possible, make decisions reversible
 
-## Integration Points
+## Integration
 
-This skill integrates with:
-- **explore**: Informed by exploration findings
-- **implement**: Guides implementation approach
-- **validate**: Defines testing requirements
-- **ship**: Plans deployment strategy
-- **iterate**: Feeds back into improvement cycle
+**Related skills:**
+- **explore** — Informed by exploration findings
+- **implement** — Guides implementation approach
+- **validate** — Defines testing requirements
+- **ship** — Plans deployment strategy
+- **iterate** — Feeds back into improvement cycle
+
+**Workflow chain:**
+```
+explore → architect → implement → validate → ship
+```
+
+**Next skill:** After architecture decisions are made, use **implement** to transform design into working code.
 
 ## Metrics for Success
 

@@ -2,12 +2,6 @@
 name: explore
 description: Deep codebase understanding and requirements analysis
 category: core
-triggers:
-  - "explore codebase"
-  - "understand system"
-  - "analyze requirements"
-  - "map architecture"
-  - "investigate code"
 prerequisites:
   - Access to project files
   - Basic understanding of programming concepts
@@ -250,13 +244,20 @@ sloccount .
 6. **Focus on Task**: Tailor exploration to specific objectives
 7. **Use Multiple Angles**: Combine static analysis, dynamic tracing, and documentation
 
-## Integration Points
+## Integration
 
-This skill integrates with:
-- **architect**: For design decisions based on exploration findings
-- **implement**: For informed code implementation
-- **validate**: For understanding testing requirements
-- **iterate**: For continuous improvement based on exploration insights
+**Related skills:**
+- **architect** — For design decisions based on exploration findings
+- **implement** — For informed code implementation
+- **validate** — For understanding testing requirements
+- **iterate** — For continuous improvement based on exploration insights
+
+**Workflow chain:**
+```
+explore → architect → implement → validate → ship
+```
+
+**Next skill:** After exploration is complete, use **architect** to make design decisions based on findings.
 
 ## Metrics for Success
 

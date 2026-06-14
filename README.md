@@ -1,6 +1,6 @@
 # hidmaster
 
-**One-click AI agent workflow enhancer** — give any AI coding agent 22 production-ready skills and auto-orchestration with a single command.
+**One-click AI agent workflow enhancer** — give any AI coding agent 21 production-ready skills and auto-orchestration with a single command.
 
 ## Why hidmaster?
 
@@ -49,7 +49,7 @@ hidmaster
 That's it. hidmaster will:
 
 1. **Detect** which AI agent you're using (Claude Code, MiMo-Code, Codex, OpenCode)
-2. **Install** 22 production skills to the agent's native directory
+2. **Install** 21 production skills to the agent's native directory
 3. **Configure** auto-orchestration instructions so the agent knows how to use them
 
 ### Commands
@@ -73,16 +73,16 @@ hidmaster --force                 # force reinstall
 
 ## Skills
 
-22 skills across 6 categories:
+21 skills across 6 categories:
 
 | Category | Skills | Purpose |
 |----------|--------|---------|
-| **Core** | `explore` `architect` `implement` `validate` `ship` `iterate` | Full development lifecycle |
-| **Development** | `debug` `refactor` `optimize` | Code quality and performance |
+| **Core** | `explore` `architect` `implement` `validate` `ship` `iterate` `verify` | Full development lifecycle |
+| **Development** | `debug` `refactor` `optimize` `tdd` | Code quality, performance, testing |
 | **Planning** | `brainstorm` `estimate` `roadmap` | Feature planning and scoping |
-| **Review** | `code-review` `security-review` `performance-review` | Quality assurance |
-| **Documentation** | `generate-docs` `api-docs` `changelog` | Documentation generation |
-| **Collaboration** | `parallel` `subagent` `handoff` | Multi-agent coordination |
+| **Review** | `code-review` `security-review` `feedback` | Quality assurance |
+| **Documentation** | `docs` `changelog` | Documentation generation |
+| **Collaboration** | `subagent` `handoff` | Multi-agent coordination |
 
 Each skill is a `SKILL.md` file with:
 - **Trigger conditions** — when to use it
@@ -115,7 +115,7 @@ Agent: explore → architect → implement → validate → ship
   ↓
 User: "Review the PR"
   ↓
-Agent: code-review → security-review → performance-review
+Agent: code-review → security-review → feedback
 ```
 
 ## How It Works
@@ -123,13 +123,13 @@ Agent: code-review → security-review → performance-review
 ```
 ~/.hidmaster/
 ├── bin/hidmaster              # CLI entry point (Bun)
-├── skills/                    # 22 production skills
-│   ├── core/                  # explore, architect, implement, validate, ship, iterate
-│   ├── development/           # debug, refactor, optimize
+├── skills/                    # 21 production skills
+│   ├── core/                  # explore, architect, implement, validate, ship, iterate, verify
+│   ├── development/           # debug, refactor, optimize, tdd
 │   ├── planning/              # brainstorm, estimate, roadmap
-│   ├── review/                # code-review, security-review, performance-review
-│   ├── documentation/         # generate-docs, api-docs, changelog
-│   └── collaboration/         # parallel, subagent, handoff
+│   ├── review/                # code-review, security-review, feedback
+│   ├── documentation/         # docs, changelog
+│   └── collaboration/         # subagent, handoff
 └── instructions/              # per-agent orchestration instructions
     ├── claude.md
     ├── mimocode.md
@@ -141,7 +141,7 @@ Agent: code-review → security-review → performance-review
 
 - **CLI** (`bin/hidmaster.ts` → `src/cli.ts`) — entry point, parses commands
 - **Detector** (`src/core/detector.ts`) — scans for agent marker directories (`.claude`, `.mimocode`, etc.)
-- **Skills** (`skills/`) — 22 SKILL.md files with YAML frontmatter and detailed workflows
+- **Skills** (`skills/`) — 21 SKILL.md files with YAML frontmatter and detailed workflows
 - **Instructions** (`instructions/`) — per-agent orchestration instructions that teach agents how to use skills automatically
 
 ## Development

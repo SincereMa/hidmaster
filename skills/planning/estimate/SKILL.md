@@ -2,14 +2,6 @@
 name: estimate
 description: Workload estimation and effort sizing for features and tasks
 category: planning
-triggers:
-  - estimate
-  - sizing
-  - how long will this take
-  - effort estimate
-  - story points
-  - work estimate
-  - capacity planning
 prerequisites:
   - Requirements or user stories defined
   - Technical approach identified

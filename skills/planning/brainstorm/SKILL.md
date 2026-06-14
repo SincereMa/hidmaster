@@ -2,14 +2,6 @@
 name: brainstorm
 description: Collaborative requirements discovery and feature ideation
 category: planning
-triggers:
-  - brainstorm
-  - ideation
-  - requirements gathering
-  - feature planning
-  - what should we build
-  - explore options
-  - design thinking
 prerequisites:
   - Problem statement or opportunity identified
   - Stakeholder access for input

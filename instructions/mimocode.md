@@ -275,22 +275,22 @@ complexity:
   simple:
     parallel_limit: 3
     timeout: 30s
-    skills: [parallel]
+    skills: [subagent]
     
   moderate:
     parallel_limit: 6
     timeout: 60s
-    skills: [parallel, subagent]
+    skills: [subagent, tdd]
     
   complex:
     parallel_limit: 10
     timeout: 120s
-    skills: [parallel, subagent, handoff]
+    skills: [subagent, handoff, tdd, verify]
     
   expert:
     parallel_limit: 15
     timeout: 300s
-    skills: [all]
+    skills: [subagent, handoff, tdd, verify, feedback]
     require_checkpoints: true
 ```
 

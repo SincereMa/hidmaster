@@ -2,14 +2,6 @@
 name: roadmap
 description: Strategic project roadmap creation and milestone planning
 category: planning
-triggers:
-  - roadmap
-  - project planning
-  - milestone planning
-  - quarterly planning
-  - release planning
-  - strategic planning
-  - what should we build next
 prerequisites:
   - Product vision or goals defined
   - Features prioritized or backlog exists

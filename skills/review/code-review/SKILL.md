@@ -2,15 +2,6 @@
 name: code-review
 description: Systematic code quality review for readability, maintainability, and correctness
 category: review
-triggers:
-  - review code
-  - code review
-  - check code quality
-  - code standards
-  - best practices
-  - code smell
-  - naming conventions
-  - code style
 prerequisites:
   - Code changes ready for review
   - Access to codebase and context
