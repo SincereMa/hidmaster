@@ -85,10 +85,15 @@ function loadSkillsFromPath(skillPath: string): Skill[] {
         }
 
         if (metadata.name) {
+          // Parse category from path (e.g., skills/core/explore/SKILL.md -> core)
+          const pathParts = skillPath.split('/')
+          const skillsIndex = pathParts.findIndex(p => p === 'skills')
+          const category = skillsIndex >= 0 && pathParts[skillsIndex + 1] ? pathParts[skillsIndex + 1] : 'custom'
+
           skills.push({
             name: metadata.name,
             description: metadata.description || '',
-            category: 'custom',
+            category,
             content,
             filePath: skillPath,
           })
