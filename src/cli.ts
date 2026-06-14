@@ -84,17 +84,29 @@ async function selectAgents(detectedAgents: string[], cliAgent?: string): Promis
   }
 
   if (detectedAgents.length > 0) {
-    console.log('Detected agents:')
+    console.log('Detected agents:\n')
     for (const agent of agentList) {
       if (agent.detected) {
-        console.log(`  ✓ ${agent.display} (${AGENT_MARKERS[agent.name]})`)
+        console.log(`  ✓ ${agent.display} [${AGENT_MARKERS[agent.name]}]`)
       }
     }
-    console.log('')
 
-    const answer = await askQuestion('Install skills to detected agents? [Y/n] ')
-    if (answer === '' || answer.toLowerCase() === 'y') {
-      return detectedAgents
+    if (detectedAgents.length === 1) {
+      console.log('')
+      const answer = await askQuestion(`Install skills to ${AGENT_DISPLAY_NAMES[detectedAgents[0]]}? [Y/n] `)
+      if (answer === '' || answer.toLowerCase() === 'y') {
+        return detectedAgents
+      }
+    } else {
+      console.log('')
+      const answer = await askQuestion('Install to all detected agents? [Y/n/s] (s=select) ')
+      if (answer === '' || answer.toLowerCase() === 'y') {
+        return detectedAgents
+      }
+      if (answer.toLowerCase() !== 's') {
+        console.log('Cancelled.')
+        process.exit(0)
+      }
     }
   }
 
