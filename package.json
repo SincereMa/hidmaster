@@ -1,0 +1,27 @@
+{
+  "name": "hidmaster",
+  "version": "1.0.0",
+  "description": "Hidden Master - Unified skill distribution for AI coding agents",
+  "type": "module",
+  "bin": {
+    "hidmaster": "./bin/hidmaster.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "bun run bin/hidmaster.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "glob": "^13.0.6",
+    "js-yaml": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/glob": "^9.0.0",
+    "@types/js-yaml": "^4.0.9"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
