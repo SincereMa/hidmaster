@@ -1,7 +1,7 @@
 {
   "name": "hidmaster",
-  "version": "1.0.0",
-  "description": "Hidden Master - Unified skill distribution for AI coding agents",
+  "version": "2.0.0",
+  "description": "One-click AI agent workflow enhancer - 22 production skills with auto-orchestration",
   "type": "module",
   "bin": {
     "hidmaster": "./bin/hidmaster.ts"
@@ -10,7 +10,8 @@
     "build": "tsc",
     "dev": "bun run bin/hidmaster.ts",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "install:local": "bash install.sh"
   },
   "dependencies": {
     "glob": "^13.0.6",
@@ -23,5 +24,18 @@
   },
   "peerDependencies": {
     "typescript": "^5"
-  }
+  },
+  "keywords": [
+    "ai",
+    "coding",
+    "agent",
+    "workflow",
+    "skills",
+    "opencode",
+    "mimocode",
+    "claude",
+    "codex"
+  ],
+  "author": "",
+  "license": "MIT"
 }
